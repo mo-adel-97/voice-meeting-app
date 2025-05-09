@@ -20,19 +20,18 @@ async function startCall() {
     localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
     document.getElementById('localAudio').srcObject = localStream;
 
-    // 🎤 تحليل الصوت
     const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-    const analyser = audioContext.createAnalyser();
-    const source = audioContext.createMediaStreamSource(localStream);
-    source.connect(analyser);
-    analyser.fftSize = 512;
 
-    const dataArray = new Uint8Array(analyser.frequencyBinCount);
+    // 🔸 Local mic indicator
+    const localAnalyser = audioContext.createAnalyser();
+    const localSource = audioContext.createMediaStreamSource(localStream);
+    localSource.connect(localAnalyser);
+    localAnalyser.fftSize = 512;
+    const localData = new Uint8Array(localAnalyser.frequencyBinCount);
     setInterval(() => {
-      analyser.getByteFrequencyData(dataArray);
-      const volume = dataArray.reduce((a, b) => a + b) / dataArray.length;
-      const icon = document.getElementById("micStatus");
-      icon.style.backgroundColor = volume > 10 ? "green" : "gray";
+      localAnalyser.getByteFrequencyData(localData);
+      const volume = localData.reduce((a, b) => a + b) / localData.length;
+      document.getElementById("micStatus").style.backgroundColor = volume > 10 ? "green" : "gray";
     }, 100);
 
     peerConnection = new RTCPeerConnection(config);
@@ -41,13 +40,27 @@ async function startCall() {
       peerConnection.addTrack(track, localStream);
     });
 
+    // 🔸 Create and attach empty remote stream
     remoteStream = new MediaStream();
     document.getElementById('remoteAudio').srcObject = remoteStream;
 
     peerConnection.ontrack = (event) => {
       event.streams[0].getTracks().forEach(track => {
         remoteStream.addTrack(track);
+        console.log("📡 صوت من الطرف التاني:", track.kind);
       });
+
+      // تحليل صوت الطرف الآخر
+      const remoteSource = audioContext.createMediaStreamSource(remoteStream);
+      const remoteAnalyser = audioContext.createAnalyser();
+      remoteSource.connect(remoteAnalyser);
+      remoteAnalyser.fftSize = 512;
+      const remoteData = new Uint8Array(remoteAnalyser.frequencyBinCount);
+      setInterval(() => {
+        remoteAnalyser.getByteFrequencyData(remoteData);
+        const volume = remoteData.reduce((a, b) => a + b) / remoteData.length;
+        document.getElementById("remoteStatus").style.backgroundColor = volume > 10 ? "green" : "gray";
+      }, 100);
     };
 
     peerConnection.onicecandidate = (event) => {
@@ -77,7 +90,11 @@ async function startCall() {
       peerConnection.setRemoteDescription(new RTCSessionDescription(answer));
     });
 
+    peerConnection.oniceconnectionstatechange = () => {
+      console.log("🔁 ICE state:", peerConnection.iceConnectionState);
+    };
+
   } catch (err) {
-    console.error('❌ خطأ في الميكروفون:', err);
+    console.error('❌ خطأ في تشغيل المايك:', err);
   }
 }

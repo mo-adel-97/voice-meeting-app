@@ -5,13 +5,13 @@
   <title>Voice Meeting</title>
 </head>
 <body>
-  <h1>نظام الاجتماعات الصوتية</h1>
+  <h1>🎧 نظام الاجتماعات الصوتية</h1>
 
   <input type="text" id="roomInput" placeholder="اكتب رقم الغرفة أو اتركه فارغ" />
   <button onclick="joinRoom()">انضم للاجتماع</button>
 
   <div style="margin-top: 10px;">
-    <span>🎙️ حالتك الصوتية:</span>
+    🎙️ حالتك الصوتية:
     <span id="micStatus" style="
       display: inline-block;
       width: 12px;
@@ -23,10 +23,22 @@
     "></span>
   </div>
 
+  <div style="margin-top: 10px;">
+    🧑‍🤝‍🧑 صوت الطرف الآخر:
+    <span id="remoteStatus" style="
+      display: inline-block;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background-color: gray;
+      margin-left: 8px;
+      transition: background-color 0.3s ease;
+    "></span>
+  </div>
+
   <hr />
-  <p>🎤 صوتك</p>
+
   <audio id="localAudio" autoplay muted controls></audio>
-  <p>🔊 الطرف الآخر</p>
   <audio id="remoteAudio" autoplay controls></audio>
 
   <script src="/socket.io/socket.io.js"></script>
