@@ -1,53 +1,71 @@
 const socket = io();
-
 let localStream;
 let remoteStream;
 let peerConnection;
+let roomID;
 
-// إعدادات WebRTC
 const config = {
   iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
 };
 
-// الحصول على الصوت من الميكروفون
+function joinRoom() {
+  roomID = document.getElementById('roomInput').value || Math.random().toString(36).substring(2, 8);
+  socket.emit('join-room', roomID);
+  alert(`📎 Room ID: ${roomID}`);
+  startCall();
+}
+
 async function startCall() {
   try {
     localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-    const localAudio = document.getElementById('localAudio');
-    localAudio.srcObject = localStream;
+    document.getElementById('localAudio').srcObject = localStream;
 
-    // إنشاء peer connection
+    // 🎤 تحليل الصوت
+    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    const analyser = audioContext.createAnalyser();
+    const source = audioContext.createMediaStreamSource(localStream);
+    source.connect(analyser);
+    analyser.fftSize = 512;
+
+    const dataArray = new Uint8Array(analyser.frequencyBinCount);
+    setInterval(() => {
+      analyser.getByteFrequencyData(dataArray);
+      const volume = dataArray.reduce((a, b) => a + b) / dataArray.length;
+      const icon = document.getElementById("micStatus");
+      icon.style.backgroundColor = volume > 10 ? "green" : "gray";
+    }, 100);
+
     peerConnection = new RTCPeerConnection(config);
-    peerConnection.addStream(localStream);
 
-    // إرسال الـ ICE candidates للمستخدمين الآخرين
+    localStream.getTracks().forEach(track => {
+      peerConnection.addTrack(track, localStream);
+    });
+
+    remoteStream = new MediaStream();
+    document.getElementById('remoteAudio').srcObject = remoteStream;
+
+    peerConnection.ontrack = (event) => {
+      event.streams[0].getTracks().forEach(track => {
+        remoteStream.addTrack(track);
+      });
+    };
+
     peerConnection.onicecandidate = (event) => {
       if (event.candidate) {
-        socket.emit('ice-candidate', event.candidate);
+        socket.emit('ice-candidate', event.candidate, roomID);
       }
     };
 
-    // استقبال الـ ICE candidates
     socket.on('ice-candidate', (candidate) => {
       peerConnection.addIceCandidate(new RTCIceCandidate(candidate));
     });
 
-    // استقبال الفيديو من المستخدمين الآخرين
-    peerConnection.onaddstream = (event) => {
-      remoteStream = event.stream;
-      const remoteAudio = document.getElementById('remoteAudio');
-      remoteAudio.srcObject = remoteStream;
-    };
-
-    // إرسال الـ offer عندما المستخدم ينضم لغرفة الاجتماع
     socket.on('user-joined', async (id) => {
-      console.log('مستخدم انضم، إرسال عرض الاتصال');
       const offer = await peerConnection.createOffer();
       await peerConnection.setLocalDescription(offer);
       socket.emit('offer', offer, id);
     });
 
-    // استقبال الـ offer من مستخدم آخر
     socket.on('offer', async (offer, id) => {
       await peerConnection.setRemoteDescription(new RTCSessionDescription(offer));
       const answer = await peerConnection.createAnswer();
@@ -55,13 +73,11 @@ async function startCall() {
       socket.emit('answer', answer, id);
     });
 
-    // استقبال الـ answer من مستخدم آخر
     socket.on('answer', (answer) => {
       peerConnection.setRemoteDescription(new RTCSessionDescription(answer));
     });
+
   } catch (err) {
-    console.error('Error accessing media devices.', err);
+    console.error('❌ خطأ في الميكروفون:', err);
   }
 }
-
-startCall();
