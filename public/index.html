@@ -1,45 +1,111 @@
 <!DOCTYPE html>
-<html lang="ar">
+<html lang="ar" dir="rtl">
 <head>
   <meta charset="UTF-8" />
-  <title>Voice Meeting</title>
+  <title>نظام الاجتماعات الصوتية</title>
+  <style>
+    body {
+      background-color: #f9f9f9;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 40px;
+    }
+
+    h1 {
+      color: #2c3e50;
+      margin-bottom: 20px;
+    }
+
+    .card {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      padding: 30px;
+      max-width: 500px;
+      width: 100%;
+      text-align: center;
+    }
+
+    input[type="text"] {
+      width: 80%;
+      padding: 10px;
+      margin-bottom: 15px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      font-size: 16px;
+    }
+
+    button {
+      background-color: #3498db;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      font-size: 16px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+
+    button:hover {
+      background-color: #2980b9;
+    }
+
+    .status {
+      margin: 10px 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 15px;
+      color: #444;
+    }
+
+    .status span {
+      display: inline-block;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background-color: gray;
+      margin-right: 10px;
+      transition: background-color 0.3s ease;
+    }
+
+    audio {
+      margin: 10px 0;
+      width: 100%;
+    }
+
+    hr {
+      border: none;
+      border-top: 1px solid #eee;
+      margin: 20px 0;
+    }
+  </style>
 </head>
 <body>
-  <h1>🎧 نظام الاجتماعات الصوتية</h1>
+  <div class="card">
+    <h1>🎧 نظام الاجتماعات الصوتية</h1>
 
-  <input type="text" id="roomInput" placeholder="اكتب رقم الغرفة أو اتركه فارغ" />
-  <button onclick="joinRoom()">انضم للاجتماع</button>
+    <input type="text" id="roomInput" placeholder="ادخل كود الغرفة أو اتركه فارغ" />
+    <br />
+    <button onclick="joinRoom()">انضم إلى الاجتماع</button>
 
-  <div style="margin-top: 10px;">
-    🎙️ حالتك الصوتية:
-    <span id="micStatus" style="
-      display: inline-block;
-      width: 12px;
-      height: 12px;
-      border-radius: 50%;
-      background-color: gray;
-      margin-left: 8px;
-      transition: background-color 0.3s ease;
-    "></span>
+    <div class="status">
+      <span id="micStatus"></span>
+      🎙️ حالتك الصوتية
+    </div>
+
+    <div class="status">
+      <span id="remoteStatus"></span>
+      🧑‍🤝‍🧑 الطرف الآخر
+    </div>
+
+    <hr />
+
+    <audio id="localAudio" autoplay muted controls></audio>
+    <audio id="remoteAudio" autoplay controls></audio>
   </div>
-
-  <div style="margin-top: 10px;">
-    🧑‍🤝‍🧑 صوت الطرف الآخر:
-    <span id="remoteStatus" style="
-      display: inline-block;
-      width: 12px;
-      height: 12px;
-      border-radius: 50%;
-      background-color: gray;
-      margin-left: 8px;
-      transition: background-color 0.3s ease;
-    "></span>
-  </div>
-
-  <hr />
-
-  <audio id="localAudio" autoplay muted controls></audio>
-  <audio id="remoteAudio" autoplay controls></audio>
 
   <script src="/socket.io/socket.io.js"></script>
   <script src="meeting.js"></script>
