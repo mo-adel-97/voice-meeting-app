@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Veno Voice Meeting</title>
+</head>
+<body>
+  <h1>🔊 Veno Voice Meeting</h1>
+  <input type="text" id="room" placeholder="Enter Room ID" />
+  <button onclick="joinRoom()">Join Meeting</button>
+
+  <h2>Local Audio</h2>
+  <audio id="localAudio" autoplay muted></audio>
+
+  <h2>Remote Audio</h2>
+  <audio id="remoteAudio" autoplay></audio>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="meeting.js"></script>
+  <script>
+    const socket = io();
+
+    function joinRoom() {
+      const roomID = document.getElementById('room').value;
+      socket.emit('join-room', roomID);
+    }
+
+    socket.on('user-joined', id => {
+      console.log('📥 شخص جديد انضم:', id);
+    });
+
+    socket.on('user-left', id => {
+      console.log('👋 شخص خرج:', id);
+    });
+  </script>
+</body>
+</html>
