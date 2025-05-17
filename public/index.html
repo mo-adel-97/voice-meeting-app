@@ -1,113 +1,72 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-  <meta charset="UTF-8" />
-  <title>نظام الاجتماعات الصوتية</title>
+  <meta charset="UTF-8">
+  <title>الاجتماعات الصوتية</title>
   <style>
     body {
-      background-color: #f9f9f9;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      font-family: Arial;
       display: flex;
-      flex-direction: column;
+      justify-content: center;
       align-items: center;
-      padding: 40px;
-    }
-
-    h1 {
-      color: #2c3e50;
-      margin-bottom: 20px;
+      height: 100vh;
+      background-color: #f0f2f5;
     }
 
     .card {
       background: white;
-      border-radius: 12px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
       padding: 30px;
-      max-width: 500px;
-      width: 100%;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
       text-align: center;
+      width: 400px;
     }
 
-    input[type="text"] {
-      width: 80%;
+    input {
       padding: 10px;
       margin-bottom: 15px;
-      border: 1px solid #ccc;
-      border-radius: 8px;
+      width: 100%;
       font-size: 16px;
     }
 
     button {
-      background-color: #3498db;
+      width: 100%;
+      padding: 10px;
+      font-size: 16px;
+      margin-top: 10px;
+      background: #3498db;
       color: white;
       border: none;
-      padding: 10px 20px;
-      font-size: 16px;
       border-radius: 8px;
       cursor: pointer;
-      transition: background-color 0.3s ease;
     }
 
     button:hover {
-      background-color: #2980b9;
-    }
-
-    .status {
-      margin: 10px 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 15px;
-      color: #444;
-    }
-
-    .status span {
-      display: inline-block;
-      width: 14px;
-      height: 14px;
-      border-radius: 50%;
-      background-color: gray;
-      margin-right: 10px;
-      transition: background-color 0.3s ease;
-    }
-
-    audio {
-      margin: 10px 0;
-      width: 100%;
-    }
-
-    hr {
-      border: none;
-      border-top: 1px solid #eee;
-      margin: 20px 0;
+      background: #2980b9;
     }
   </style>
 </head>
 <body>
   <div class="card">
-    <h1>🎧 نظام الاجتماعات الصوتية</h1>
-
-    <input type="text" id="roomInput" placeholder="ادخل كود الغرفة أو اتركه فارغ" />
-    <br />
-    <button onclick="joinRoom()">انضم إلى الاجتماع</button>
-
-    <div class="status">
-      <span id="micStatus"></span>
-      🎙️ حالتك الصوتية
-    </div>
-
-    <div class="status">
-      <span id="remoteStatus"></span>
-      🧑‍🤝‍🧑 الطرف الآخر
-    </div>
-
+    <h2>🎧 نظام الاجتماعات الصوتية</h2>
+    <button onclick="createMeeting()">🔗 إنشاء اجتماع جديد</button>
     <hr />
-
-    <audio id="localAudio" autoplay muted controls></audio>
-    <audio id="remoteAudio" autoplay controls></audio>
+    <input type="text" id="roomId" placeholder="أدخل كود الاجتماع" />
+    <button onclick="joinMeeting()">📥 انضم للاجتماع</button>
   </div>
 
-  <script src="/socket.io/socket.io.js"></script>
-  <script src="meeting.js"></script>
+  <script>
+    function createMeeting() {
+      const roomId = Math.random().toString(36).substring(2, 10);
+      window.location.href = `/meeting.html?room=${roomId}&host=1`;
+    }
+
+    function joinMeeting() {
+      const roomId = document.getElementById('roomId').value.trim();
+      if (roomId) {
+        window.location.href = `/meeting.html?room=${roomId}`;
+      }
+    }
+  </script>
 </body>
 </html>

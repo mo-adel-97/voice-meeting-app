@@ -9,31 +9,53 @@ const io = new Server(server);
 
 app.use(express.static(path.join(__dirname, 'public')));
 
+const rooms = {}; // roomId -> { users: Set<socketId>, host: socketId }
+
 io.on('connection', socket => {
   console.log('🔌 مستخدم متصل: ', socket.id);
 
-  socket.on('join-room', roomID => {
+  socket.on('join-room', ({ roomID, isHost }) => {
     socket.join(roomID);
-    console.log(`📞 المستخدم ${socket.id} دخل الغرفة ${roomID}`);
+    if (!rooms[roomID]) {
+      rooms[roomID] = { users: new Set(), host: null };
+    }
 
-    // إعلام الموجودين في الغرفة بوجود مستخدم جديد
-    socket.to(roomID).emit('user-joined', socket.id);
+    rooms[roomID].users.add(socket.id);
+    if (isHost) rooms[roomID].host = socket.id;
+
+    // إعلام المستخدمين الحاليين
+    socket.to(roomID).emit('user-joined', { id: socket.id });
+
+    // إرسال قائمة المستخدمين الجديدة للجميع
+    io.to(roomID).emit('update-users', Array.from(rooms[roomID].users).map(id => ({ id })));
 
     socket.on('disconnect', () => {
       console.log(`❌ المستخدم ${socket.id} خرج`);
-      socket.to(roomID).emit('user-left', socket.id);
+      rooms[roomID]?.users.delete(socket.id);
+
+      if (rooms[roomID] && rooms[roomID].users.size === 0) {
+        delete rooms[roomID];
+      } else {
+        io.to(roomID).emit('update-users', Array.from(rooms[roomID].users).map(id => ({ id })));
+      }
     });
 
-    socket.on('offer', (offer, targetID) => {
-      socket.to(targetID).emit('offer', offer, socket.id);
+    socket.on('offer', ({ offer, target }) => {
+      io.to(target).emit('offer', { offer, from: socket.id });
     });
 
-    socket.on('answer', (answer, targetID) => {
-      socket.to(targetID).emit('answer', answer);
+    socket.on('answer', ({ answer, target }) => {
+      io.to(target).emit('answer', { answer, from: socket.id });
     });
 
-    socket.on('ice-candidate', (candidate, targetID) => {
-      socket.to(targetID).emit('ice-candidate', candidate);
+    socket.on('ice-candidate', ({ target, candidate }) => {
+      io.to(target).emit('ice-candidate', { candidate, from: socket.id });
+    });
+
+    socket.on('force-mute', targetID => {
+      if (rooms[roomID]?.host === socket.id) {
+        io.to(targetID).emit('force-mute');
+      }
     });
   });
 });
